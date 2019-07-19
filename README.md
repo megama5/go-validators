@@ -1,2 +1,2 @@
 # go-validators
-Bunch of go validator
+Bunch of go validators.
