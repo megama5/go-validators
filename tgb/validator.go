@@ -14,25 +14,28 @@ type Reflection struct {
 	ValueOf reflect.Value
 }
 
-var rulesHolder = map[string]func(base *rule.Rule) rule.ValidateRule{
-	"required":     rule.NewRequiredRule,
-	"min":          rule.NewMinRule,
-	"max":          rule.NewMaxRule,
-	"array-unique": rule.NewArrayUniqueRule,
+type Validator struct {
+	rules map[string]func(base *rule.Rule) rule.ValidateRule
 }
 
-func Validate(in interface{}, requiredData map[string]interface{}) (bool, ErrMessagesList) {
-	a, b := validate(in, "")
+func NewValidator(rules map[string]func(base *rule.Rule) rule.ValidateRule) *Validator {
+	return &Validator{
+		rules: rules,
+	}
+}
 
-	err := required(requiredData)
+func (v *Validator) Validate(in interface{}, requiredData map[string]interface{}) (bool, error) {
+	a, b := v.validate(in, "")
+
+	err := v.required(requiredData)
 	if err != nil {
-		b = append(b, err)
+		b = append(b.(ErrMessagesList), err.(*ErrMessage))
 	}
 
 	return a, b
 }
 
-func required(data map[string]interface{}) *ErrMessage {
+func (v *Validator) required(data map[string]interface{}) error {
 	for k, v := range data {
 		switch tt := v.(type) {
 		case string:
@@ -49,7 +52,7 @@ func required(data map[string]interface{}) *ErrMessage {
 	return nil
 }
 
-func validate(in interface{}, parentName string) (bool, ErrMessagesList) {
+func (v *Validator) validate(in interface{}, parentName string) (bool, error) {
 	// will holds field name of nested structure for the recursion call
 	var nestedFieldNames []string
 
@@ -67,58 +70,55 @@ func validate(in interface{}, parentName string) (bool, ErrMessagesList) {
 		return false, errMessages
 	}
 
-	reflectObject, err := prepareReflection(in)
+	reflectObject, err := v.prepareReflection(in)
 	if err != nil {
 		log.Printf("Validator err: %v", err)
 		return false, errMessages
 	}
 
-	prepareRules(reflectObject, calculatedRules, &nestedFieldNames)
-	applyRules(calculatedRules, reflectObject, parentName, &errIndicator, &errMessages)
-	applyRuleToNestedStructures(nestedFieldNames, reflectObject, parentName, &errIndicator, &errMessages)
+	v.prepareRules(reflectObject, calculatedRules, &nestedFieldNames)
+	v.applyRules(calculatedRules, reflectObject, parentName, &errIndicator, &errMessages)
+	v.applyRuleToNestedStructures(nestedFieldNames, reflectObject, parentName, &errIndicator, &errMessages)
 
 	return !errIndicator, errMessages
 }
 
-func applyRuleToNestedStructures(
+func (v *Validator) applyRuleToNestedStructures(
 	nestedFieldNames []string,
 	reflectObject *Reflection,
 	parentName string,
 	errIndicator *bool,
 	errMessages *ErrMessagesList,
 ) {
-	parentName = fmt.Sprintf("%s%s", prepareParentName(parentName), reflectObject.TypeOf.Name())
+	parentName = fmt.Sprintf("%s%s", v.prepareParentName(parentName), reflectObject.TypeOf.Name())
 	// checking nested structures
-	for _, v := range nestedFieldNames {
-		field := reflectObject.ValueOf.FieldByName(v)
+	for _, name := range nestedFieldNames {
+		field := reflectObject.ValueOf.FieldByName(name)
 		if field.IsValid() && ((field.Kind() == reflect.Ptr && !field.IsNil()) || field.Kind() == reflect.Struct) {
-			res, list := validate(field.Interface(), parentName)
+			res, list := v.validate(field.Interface(), parentName)
 			*errIndicator = *errIndicator && res
-			*errMessages = append(*errMessages, list...)
+			*errMessages = append(*errMessages, list.(ErrMessagesList)...)
 		}
 	}
 }
 
-func applyRules(
+func (v *Validator) applyRules(
 	calculatedRules map[string]map[string][]string,
 	reflectObject *Reflection,
 	parentName string,
 	errIndicator *bool,
 	errMessages *ErrMessagesList,
 ) {
-	parentName = prepareParentName(parentName)
+	parentName = v.prepareParentName(parentName)
 	// now we have calculatedRules for the structure related to the
 	// fields and we need to get a field and validate it
 	for fieldName, rules := range calculatedRules {
 
-		//fmt.Printf("Field name under validation: %v\n", fieldName)
 		field := reflectObject.ValueOf.FieldByName(fieldName)
 		for ruleName, params := range rules {
 
-			//fmt.Printf("Field Name:%v | Rule name: %v | params:%v\n", fieldName, ruleName, params)
-			if ruleF, ruleFound := rulesHolder[ruleName]; ruleFound {
+			if ruleF, ruleFound := v.rules[ruleName]; ruleFound {
 
-				//fmt.Printf("Rule found: %v\n", ruleName)
 				result := ruleF(rule.NewRule(fieldName, params)).Validate(field)
 
 				if !result.IsSuccessful() {
@@ -134,14 +134,14 @@ func applyRules(
 	}
 }
 
-func prepareParentName(parentName string) string {
+func (v *Validator) prepareParentName(parentName string) string {
 	if parentName != "" {
 		parentName = fmt.Sprintf("%v.", parentName)
 	}
 	return parentName
 }
 
-func prepareReflection(in interface{}) (*Reflection, error) {
+func (v *Validator) prepareReflection(in interface{}) (*Reflection, error) {
 	typeOf := reflect.TypeOf(in)
 	if typeOf.Kind() == reflect.Ptr {
 		typeOf = typeOf.Elem()
@@ -158,7 +158,7 @@ func prepareReflection(in interface{}) (*Reflection, error) {
 	}, nil
 }
 
-func prepareRules(
+func (v *Validator) prepareRules(
 	reflectObject *Reflection,
 	calculatedRules map[string]map[string][]string,
 	nestedFieldNames *[]string,
