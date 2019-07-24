@@ -1,4 +1,4 @@
-package rules
+package rule
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ func NewArrayUniqueRule(base *Rule) ValidateRule {
 	const ruleName = "array-unique"
 
 	return &ArrayUnique{
-		Rule: base.init(ruleName, errMessage, 2),
+		Rule: base.Init(ruleName, errMessage, 2),
 	}
 }
 
@@ -104,7 +104,7 @@ func (r *ArrayUnique) Validate(field reflect.Value) (vr ValidateRule) {
 
 	return r
 err:
-	return r.validationFailed()
+	return r.ValidationFailed()
 }
 
 func (r *ArrayUnique) isRestrictionValid() bool {

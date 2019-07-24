@@ -1,12 +1,11 @@
-package rules
+package rule
 
 import (
-	"fmt"
 	"reflect"
 	"strconv"
 )
 
-type RuleMin struct {
+type Min struct {
 	*Rule
 	min int64
 }
@@ -15,12 +14,12 @@ func NewMinRule(base *Rule) ValidateRule {
 	const errMessage = "Min validation err"
 	const ruleName = "min"
 
-	return &RuleMin{
-		Rule: base.init(ruleName, errMessage, 1),
+	return &Min{
+		Rule: base.Init(ruleName, errMessage, 1),
 	}
 }
 
-func (r *RuleMin) Validate(field reflect.Value) (vr ValidateRule) {
+func (r *Min) Validate(field reflect.Value) (vr ValidateRule) {
 
 	if !field.IsValid() || !r.isRestrictionValid() {
 		goto err
@@ -55,17 +54,16 @@ func (r *RuleMin) Validate(field reflect.Value) (vr ValidateRule) {
 
 	return r
 err:
-	return r.validationFailed()
+	return r.ValidationFailed()
 }
 
-func (r *RuleMin) isRestrictionValid() bool {
+func (r *Min) isRestrictionValid() bool {
 	if len(r.Restrictions) < r.MinRestrictionsCount {
 		return false
 	}
 
 	val, err := strconv.Atoi(r.Restrictions[0])
 	if err != nil {
-		fmt.Printf("Wrong restriction parameter in %v rule", r.RuleName)
 		return false
 	}
 

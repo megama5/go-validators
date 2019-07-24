@@ -1,10 +1,10 @@
-package rules
+package rule
 
 import (
 	"reflect"
 )
 
-type RuleRequired struct {
+type Required struct {
 	*Rule
 }
 
@@ -12,12 +12,12 @@ func NewRequiredRule(base *Rule) ValidateRule {
 	const errMessage = "Required validation err"
 	const ruleName = "required"
 
-	return &RuleRequired{
-		Rule: base.init(ruleName, errMessage, 0),
+	return &Required{
+		Rule: base.Init(ruleName, errMessage, 0),
 	}
 }
 
-func (r *RuleRequired) Validate(field reflect.Value) (vr ValidateRule) {
+func (r *Required) Validate(field reflect.Value) (vr ValidateRule) {
 
 	if !field.IsValid() {
 		goto err
@@ -64,5 +64,5 @@ func (r *RuleRequired) Validate(field reflect.Value) (vr ValidateRule) {
 
 	return r
 err:
-	return r.validationFailed()
+	return r.ValidationFailed()
 }

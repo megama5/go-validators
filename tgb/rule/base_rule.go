@@ -1,4 +1,4 @@
-package rules
+package rule
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type Rule struct {
 	ErrorMessage         string
 	Restrictions         []string
 	MinRestrictionsCount int
-	ValidationFailed     bool
+	IsValidationFailed   bool
 }
 
 func NewRule(fieldName string, restrictions []string) *Rule {
@@ -29,26 +29,26 @@ func NewRule(fieldName string, restrictions []string) *Rule {
 	}
 }
 
-func (r *Rule) validationFailed() ValidateRule {
-	r.FailedValidation()
+func (r *Rule) ValidationFailed() ValidateRule {
+	r.validationFailed()
 	return r
 }
 
-func (r *Rule) init(ruleName, errMessage string, minRestrictionsCount int) *Rule {
+func (r *Rule) Init(ruleName, errMessage string, minRestrictionsCount int) *Rule {
 	r.RuleName = ruleName
 	r.ErrorMessage = errMessage
-	r.ValidationFailed = false
+	r.IsValidationFailed = false
 	r.MinRestrictionsCount = minRestrictionsCount
 
 	return r
 }
 
-func (r *Rule) FailedValidation() {
-	r.ValidationFailed = true
+func (r *Rule) validationFailed() {
+	r.IsValidationFailed = true
 }
 
 func (r *Rule) IsSuccessful() bool {
-	return !r.ValidationFailed
+	return !r.IsValidationFailed
 }
 
 func (r *Rule) GetErrorMessage() string {

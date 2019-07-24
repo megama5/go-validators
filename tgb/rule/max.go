@@ -1,4 +1,4 @@
-package rules
+package rule
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-type RuleMax struct {
+type Max struct {
 	*Rule
 	max int64
 }
@@ -15,12 +15,12 @@ func NewMaxRule(base *Rule) ValidateRule {
 	const errMessage = "Max validation err"
 	const ruleName = "max"
 
-	return &RuleMax{
-		Rule: base.init(ruleName, errMessage, 1),
+	return &Max{
+		Rule: base.Init(ruleName, errMessage, 1),
 	}
 }
 
-func (r *RuleMax) Validate(field reflect.Value) (vr ValidateRule) {
+func (r *Max) Validate(field reflect.Value) (vr ValidateRule) {
 
 	if !field.IsValid() || !r.isRestrictionValid() {
 		goto err
@@ -55,10 +55,10 @@ func (r *RuleMax) Validate(field reflect.Value) (vr ValidateRule) {
 
 	return r
 err:
-	return r.validationFailed()
+	return r.ValidationFailed()
 }
 
-func (r *RuleMax) isRestrictionValid() bool {
+func (r *Max) isRestrictionValid() bool {
 	if len(r.Restrictions) < r.MinRestrictionsCount {
 		return false
 	}

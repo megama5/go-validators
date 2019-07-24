@@ -8,21 +8,20 @@ type ErrMessage struct {
 	Message   string
 }
 
-func (em ErrMessage) String() string {
-	//return fmt.Sprintf("Field \"%s\" rised error on rule \"%s\" with message: \"%v\"", em.FieldName, em.RuleName, em.Message)
+func (em *ErrMessage) Error() string {
 	return fmt.Sprintf("Validation error -> Field: \"%s\", Rule:\"%s\", Message: \"%v\"", em.FieldName, em.RuleName, em.Message)
 }
 
 type ErrMessagesList []*ErrMessage
 
-func (eml ErrMessagesList) String() string {
+func (eml ErrMessagesList) Error() string {
 	var result string
 	for _, v := range eml {
 		if v == nil {
 			continue
 		}
 
-		result = fmt.Sprintf("%s,%s", result, v.String())
+		result = fmt.Sprintf("%s,%s", result, v.Error())
 	}
 
 	return result
