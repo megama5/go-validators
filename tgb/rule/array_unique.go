@@ -26,7 +26,7 @@ func (r *ArrayUnique) Validate(field reflect.Value) (vr ValidateRule) {
 	values := make(map[interface{}]interface{})
 
 	if !field.IsValid() || !r.isRestrictionValid() {
-		return r.ValidationFailed()
+		goto err
 	}
 
 	switch field.Kind() {
@@ -35,10 +35,10 @@ func (r *ArrayUnique) Validate(field reflect.Value) (vr ValidateRule) {
 		switch {
 		case field.IsNil():
 			r.Log(fmt.Sprintf("Nill pointer value on Uniquer Array rule"))
-			return r.ValidationFailed()
+			goto err
 		case field.Len() == 0 && !r.canBeEmpty:
 			r.Log(fmt.Sprintf("Empty array recived"))
-			return r.ValidationFailed()
+			goto err
 		}
 
 		errFlag := false
@@ -67,7 +67,7 @@ func (r *ArrayUnique) Validate(field reflect.Value) (vr ValidateRule) {
 
 				if !reflectedElementValue.IsValid() {
 					r.Log("Couldn't convert element into struct")
-					return r.ValidationFailed()
+					goto err
 				}
 
 				elementFieldValue := reflectedElementValue.FieldByName(r.uniqueFieldName)
@@ -95,14 +95,16 @@ func (r *ArrayUnique) Validate(field reflect.Value) (vr ValidateRule) {
 		}
 
 		if errFlag {
-			return r.ValidationFailed()
+			goto err
 		}
 	default:
 		r.Log(fmt.Sprintf("Unsupported field kind. Kind: %v", field.Kind()))
-		return r.ValidationFailed()
+		goto err
 	}
 
 	return r
+err:
+	return r.ValidationFailed()
 }
 
 func (r *ArrayUnique) isRestrictionValid() bool {

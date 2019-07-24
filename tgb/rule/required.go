@@ -20,27 +20,27 @@ func NewRequiredRule(base *Rule) ValidateRule {
 func (r *Required) Validate(field reflect.Value) (vr ValidateRule) {
 
 	if !field.IsValid() {
-		return r.ValidationFailed()
+		goto err
 	}
 
 	switch field.Kind() {
 	case reflect.String:
 		if len(field.String()) == 0 {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Ptr:
 		if field.IsNil() {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Map:
 		fallthrough
 	case reflect.Slice:
 		if field.IsNil() || field.Len() == 0 {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Array:
 		if field.Len() == 0 {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Int8:
 		fallthrough
@@ -52,15 +52,17 @@ func (r *Required) Validate(field reflect.Value) (vr ValidateRule) {
 		fallthrough
 	case reflect.Int:
 		if field.Int() == 0 {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Float32:
 		fallthrough
 	case reflect.Float64:
 		if field.Float() == 0 {
-			return r.ValidationFailed()
+			goto err
 		}
 	}
 
 	return r
+err:
+	return r.ValidationFailed()
 }

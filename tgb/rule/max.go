@@ -23,23 +23,23 @@ func NewMaxRule(base *Rule) ValidateRule {
 func (r *Max) Validate(field reflect.Value) (vr ValidateRule) {
 
 	if !field.IsValid() || !r.isRestrictionValid() {
-		return r.ValidationFailed()
+		goto err
 	}
 
 	switch field.Kind() {
 	case reflect.String:
 		if int64(len(field.String())) > r.max {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Map:
 		fallthrough
 	case reflect.Slice:
 		if field.IsNil() || int64(len(field.String())) > r.max {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Array:
 		if int64(field.Len()) > r.max {
-			return r.ValidationFailed()
+			goto err
 		}
 	case reflect.Int:
 		fallthrough
@@ -49,11 +49,13 @@ func (r *Max) Validate(field reflect.Value) (vr ValidateRule) {
 		fallthrough
 	case reflect.Int64:
 		if field.Int() > r.max {
-			return r.ValidationFailed()
+			goto err
 		}
 	}
 
 	return r
+err:
+	return r.ValidationFailed()
 }
 
 func (r *Max) isRestrictionValid() bool {
