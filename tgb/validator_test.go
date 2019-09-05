@@ -2,6 +2,12 @@ package tgb
 
 import "testing"
 
+type TCase struct {
+	TestObject      interface{}
+	TargetResult    bool
+	CaseDescription string
+}
+
 func TestRequiredRule(t *testing.T) {
 
 	type Foo struct {
@@ -10,12 +16,6 @@ func TestRequiredRule(t *testing.T) {
 		Info           map[string]interface{} `validate:"required"`
 		AdditionalInfo map[string]interface{}
 		About          string
-	}
-
-	type TCase struct {
-		TestObject      interface{}
-		TargetResult    bool
-		CaseDescription string
 	}
 
 	cases := []*TCase{
